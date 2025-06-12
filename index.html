@@ -127,9 +127,10 @@
                 2. Click on any city marker<br>
                 3. Listen to how data maps to sound:<br>
                 • <strong>Pitch:</strong> Population (higher = higher pitch)<br>
-                • <strong>Volume:</strong> GDP per capita<br>
-                • <strong>Duration:</strong> Area size<br>
-                • <strong>Stereo Position:</strong> Geographic location
+                • <strong>Volume:</strong> GDP per capita (listen during attack)<br>
+                • <strong>Duration:</strong> Area size (total length)<br>
+                • <strong>Timbre:</strong> Wealth (rich=sawtooth, poor=sine)<br>
+                • <strong>Stereo Position:</strong> Geographic location (use headphones!)
             </div>
             
             <div class="controls">
@@ -154,9 +155,10 @@
             <div class="legend">
                 <h3>Sound Legend</h3>
                 <div><span class="sound-indicator"></span><strong>Pitch:</strong> Population size</div>
-                <div style="margin: 5px 0;"><strong>Volume:</strong> Economic prosperity</div>
-                <div><strong>Duration:</strong> Geographic area</div>
-                <div><strong>Stereo:</strong> East/West position</div>
+                <div style="margin: 5px 0;"><strong>Volume:</strong> Economic prosperity (listen for attack level)</div>
+                <div><strong>Duration:</strong> Geographic area (total sound length)</div>
+                <div><strong>Timbre:</strong> Wealth level (sawtooth=rich, square=middle, sine=lower)</div>
+                <div><strong>Stereo:</strong> East/West position (use headphones!)</div>
             </div>
             
             <div class="data-display" id="dataDisplay">
@@ -226,6 +228,87 @@
                 gdpPerCapita: 60000,
                 area: 12367,
                 description: "Largest city in Australia"
+            },
+            {
+                name: "Lagos",
+                lat: 6.5244,
+                lng: 3.3792,
+                population: 15388000,
+                gdpPerCapita: 8000,
+                area: 1171,
+                description: "Largest city in Nigeria"
+            },
+            {
+                name: "Mexico City",
+                lat: 19.4326,
+                lng: -99.1332,
+                population: 9209944,
+                gdpPerCapita: 22000,
+                area: 1485,
+                description: "Capital of Mexico"
+            },
+            {
+                name: "Cairo",
+                lat: 30.0444,
+                lng: 31.2357,
+                population: 10230350,
+                gdpPerCapita: 12000,
+                area: 606,
+                description: "Capital of Egypt"
+            },
+            {
+                name: "Singapore",
+                lat: 1.3521,
+                lng: 103.8198,
+                population: 5896686,
+                gdpPerCapita: 85000,
+                area: 728,
+                description: "City-state in Southeast Asia"
+            },
+            {
+                name: "Los Angeles",
+                lat: 34.0522,
+                lng: -118.2437,
+                population: 3898747,
+                gdpPerCapita: 70000,
+                area: 1302,
+                description: "Second largest US city"
+            },
+            {
+                name: "Istanbul",
+                lat: 41.0082,
+                lng: 28.9784,
+                population: 15519267,
+                gdpPerCapita: 28000,
+                area: 5343,
+                description: "Largest city in Turkey"
+            },
+            {
+                name: "Beijing",
+                lat: 39.9042,
+                lng: 116.4074,
+                population: 21893095,
+                gdpPerCapita: 35000,
+                area: 16411,
+                description: "Capital of China"
+            },
+            {
+                name: "Buenos Aires",
+                lat: -34.6118,
+                lng: -58.3960,
+                population: 3075646,
+                gdpPerCapita: 30000,
+                area: 203,
+                description: "Capital of Argentina"
+            },
+            {
+                name: "Nairobi",
+                lat: -1.2864,
+                lng: 36.8172,
+                population: 4922000,
+                gdpPerCapita: 6500,
+                area: 696,
+                description: "Capital of Kenya"
             }
         ];
 
@@ -312,15 +395,27 @@
                 const duration = mapToDuration(city.area);
                 const panning = mapToPanning(city.lng);
 
-                // Configure the sound
+                // Configure the sound with more distinctive characteristics
                 currentOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-                currentOscillator.type = 'sine'; // Simple sine wave
                 
+                // Use different waveform based on GDP (timbre variable)
+                if (city.gdpPerCapita > 50000) {
+                    currentOscillator.type = 'sawtooth'; // Rich countries = brighter sound
+                } else if (city.gdpPerCapita > 30000) {
+                    currentOscillator.type = 'square'; // Medium wealth = harsh sound
+                } else {
+                    currentOscillator.type = 'sine'; // Lower wealth = pure tone
+                }
+                
+                // Much more pronounced volume differences and longer attack to hear volume changes
                 currentGainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                currentGainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1); // Attack
-                currentGainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); // Decay
+                currentGainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.3); // Slower attack
+                currentGainNode.gain.setValueAtTime(volume, audioContext.currentTime + 0.4); // Hold at peak
+                currentGainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); // Then decay
                 
-                currentPannerNode.pan.setValueAtTime(panning, audioContext.currentTime);
+                // More extreme panning to make stereo position obvious
+                const extremePanning = panning * 1.5; // Exaggerate the effect
+                currentPannerNode.pan.setValueAtTime(Math.max(-1, Math.min(1, extremePanning)), audioContext.currentTime);
 
                 // Start and stop the sound
                 currentOscillator.start(audioContext.currentTime);
