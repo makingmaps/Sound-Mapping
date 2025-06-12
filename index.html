@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound-Enhanced Geographic Visualization</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #34495e;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+        }
+        
+        .legend {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .sound-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #e74c3c;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .data-display {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Sound-Enhanced Map</h2>
+            <p>Implementing Krygier's Sound Variables (1994)</p>
+            
+            <div class="instructions">
+                <strong>Instructions:</strong><br>
+                1. Click "Enable Audio" to start<br>
+                2. Click on any city marker<br>
+                3. Listen to how data maps to sound:<br>
+                • <strong>Pitch:</strong> Population (higher = higher pitch)<br>
+                • <strong>Volume:</strong> GDP per capita<br>
+                • <strong>Duration:</strong> Area size<br>
+                • <strong>Stereo Position:</strong> Geographic location
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <button id="enableAudio">Enable Audio</button>
+                    <button id="stopSound" disabled>Stop Sound</button>
+                </div>
+                
+                <div class="control-group">
+                    <label for="masterVolume">Master Volume:</label>
+                    <input type="range" id="masterVolume" min="0" max="1" step="0.1" value="0.3">
+                    <span id="volumeDisplay">30%</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="soundDuration">Sound Duration (seconds):</label>
+                    <input type="range" id="soundDuration" min="0.5" max="3" step="0.1" value="1.5">
+                    <span id="durationDisplay">1.5s</span>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <h3>Sound Legend</h3>
+                <div><span class="sound-indicator"></span><strong>Pitch:</strong> Population size</div>
+                <div style="margin: 5px 0;"><strong>Volume:</strong> Economic prosperity</div>
+                <div><strong>Duration:</strong> Geographic area</div>
+                <div><strong>Stereo:</strong> East/West position</div>
+            </div>
+            
+            <div class="data-display" id="dataDisplay">
+                Click a city to see data mapping...
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Sample city data with multiple variables
+        const cityData = [
+            {
+                name: "New York",
+                lat: 40.7128,
+                lng: -74.0060,
+                population: 8336817,
+                gdpPerCapita: 65000,
+                area: 783.8,
+                description: "Largest city in the US"
+            },
+            {
+                name: "London",
+                lat: 51.5074,
+                lng: -0.1278,
+                population: 9648110,
+                gdpPerCapita: 55000,
+                area: 1572,
+                description: "Capital of the UK"
+            },
+            {
+                name: "Tokyo",
+                lat: 35.6762,
+                lng: 139.6503,
+                population: 14094034,
+                gdpPerCapita: 48000,
+                area: 2194,
+                description: "Capital of Japan"
+            },
+            {
+                name: "Mumbai",
+                lat: 19.0760,
+                lng: 72.8777,
+                population: 12478447,
+                gdpPerCapita: 15000,
+                area: 603.4,
+                description: "Financial capital of India"
+            },
+            {
+                name: "São Paulo",
+                lat: -23.5505,
+                lng: -46.6333,
+                population: 12325232,
+                gdpPerCapita: 25000,
+                area: 1521,
+                description: "Largest city in Brazil"
+            },
+            {
+                name: "Sydney",
+                lat: -33.8688,
+                lng: 151.2093,
+                population: 5312163,
+                gdpPerCapita: 60000,
+                area: 12367,
+                description: "Largest city in Australia"
+            }
+        ];
+
+        // Audio context and variables
+        let audioContext;
+        let isAudioEnabled = false;
+        let currentOscillator = null;
+        let currentGainNode = null;
+        let currentPannerNode = null;
+
+        // Map initialization
+        const map = L.map('map').setView([30, 0], 2);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Sound utility functions implementing Krygier's sound variables
+        function mapToFrequency(population) {
+            // Map population to musical frequency range (A3 to A6)
+            const minPop = Math.min(...cityData.map(c => c.population));
+            const maxPop = Math.max(...cityData.map(c => c.population));
+            const normalized = (population - minPop) / (maxPop - minPop);
+            // A3 (220Hz) to A6 (1760Hz) - 3 octaves
+            return 220 + (normalized * 1540);
+        }
+
+        function mapToVolume(gdpPerCapita) {
+            // Map GDP per capita to volume (0.1 to 0.8)
+            const minGDP = Math.min(...cityData.map(c => c.gdpPerCapita));
+            const maxGDP = Math.max(...cityData.map(c => c.gdpPerCapita));
+            const normalized = (gdpPerCapita - minGDP) / (maxGDP - minGDP);
+            return 0.1 + (normalized * 0.7);
+        }
+
+        function mapToDuration(area) {
+            // Map area to sound duration (0.5 to 3 seconds)
+            const minArea = Math.min(...cityData.map(c => c.area));
+            const maxArea = Math.max(...cityData.map(c => c.area));
+            const normalized = (area - minArea) / (maxArea - minArea);
+            const baseDuration = parseFloat(document.getElementById('soundDuration').value);
+            return baseDuration * (0.5 + normalized * 0.5);
+        }
+
+        function mapToPanning(lng) {
+            // Map longitude to stereo position (-1 to 1)
+            return Math.max(-1, Math.min(1, lng / 180));
+        }
+
+        // Audio functions
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                isAudioEnabled = true;
+                document.getElementById('enableAudio').disabled = true;
+                document.getElementById('stopSound').disabled = false;
+                console.log('Audio enabled successfully');
+            } catch (error) {
+                console.error('Error initializing audio:', error);
+                alert('Audio not supported in this browser');
+            }
+        }
+
+        function playSound(city) {
+            if (!isAudioEnabled || !audioContext) return;
+
+            // Stop any currently playing sound
+            stopCurrentSound();
+
+            try {
+                // Create oscillator (tone generator)
+                currentOscillator = audioContext.createOscillator();
+                currentGainNode = audioContext.createGain();
+                currentPannerNode = audioContext.createStereoPanner();
+
+                // Set up the audio graph: oscillator -> gain -> panner -> destination
+                currentOscillator.connect(currentGainNode);
+                currentGainNode.connect(currentPannerNode);
+                currentPannerNode.connect(audioContext.destination);
+
+                // Apply sound variables
+                const frequency = mapToFrequency(city.population);
+                const volume = mapToVolume(city.gdpPerCapita) * parseFloat(document.getElementById('masterVolume').value);
+                const duration = mapToDuration(city.area);
+                const panning = mapToPanning(city.lng);
+
+                // Configure the sound
+                currentOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                currentOscillator.type = 'sine'; // Simple sine wave
+                
+                currentGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                currentGainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1); // Attack
+                currentGainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); // Decay
+                
+                currentPannerNode.pan.setValueAtTime(panning, audioContext.currentTime);
+
+                // Start and stop the sound
+                currentOscillator.start(audioContext.currentTime);
+                currentOscillator.stop(audioContext.currentTime + duration);
+
+                // Update data display
+                updateDataDisplay(city, frequency, volume, duration, panning);
+
+                // Clean up when sound ends
+                currentOscillator.onended = () => {
+                    currentOscillator = null;
+                    currentGainNode = null;
+                    currentPannerNode = null;
+                };
+
+            } catch (error) {
+                console.error('Error playing sound:', error);
+            }
+        }
+
+        function stopCurrentSound() {
+            if (currentOscillator) {
+                try {
+                    currentOscillator.stop();
+                    currentOscillator = null;
+                    currentGainNode = null;
+                    currentPannerNode = null;
+                } catch (error) {
+                    console.error('Error stopping sound:', error);
+                }
+            }
+        }
+
+        function updateDataDisplay(city, frequency, volume, duration, panning) {
+            const display = document.getElementById('dataDisplay');
+            display.innerHTML = `
+                <strong>${city.name}</strong><br>
+                Population: ${city.population.toLocaleString()}<br>
+                GDP/capita: $${city.gdpPerCapita.toLocaleString()}<br>
+                Area: ${city.area} km²<br><br>
+                <strong>Sound Mapping:</strong><br>
+                Frequency: ${frequency.toFixed(1)} Hz<br>
+                Volume: ${(volume * 100).toFixed(1)}%<br>
+                Duration: ${duration.toFixed(1)}s<br>
+                Panning: ${panning.toFixed(2)} (${panning < 0 ? 'Left' : panning > 0 ? 'Right' : 'Center'})
+            `;
+        }
+
+        // Create map markers
+        cityData.forEach(city => {
+            const marker = L.marker([city.lat, city.lng])
+                .addTo(map)
+                .bindPopup(`
+                    <strong>${city.name}</strong><br>
+                    ${city.description}<br>
+                    Population: ${city.population.toLocaleString()}<br>
+                    GDP/capita: $${city.gdpPerCapita.toLocaleString()}<br>
+                    Area: ${city.area} km²<br>
+                    <br><em>Click marker to hear data sonification</em>
+                `);
+
+            marker.on('click', () => {
+                playSound(city);
+            });
+        });
+
+        // Event listeners
+        document.getElementById('enableAudio').addEventListener('click', initAudio);
+        document.getElementById('stopSound').addEventListener('click', stopCurrentSound);
+
+        document.getElementById('masterVolume').addEventListener('input', (e) => {
+            document.getElementById('volumeDisplay').textContent = `${Math.round(e.target.value * 100)}%`;
+        });
+
+        document.getElementById('soundDuration').addEventListener('input', (e) => {
+            document.getElementById('durationDisplay').textContent = `${e.target.value}s`;
+        });
+
+        // Instructions for students
+        console.log(`
+        Sound-Enhanced Geographic Visualization Tutorial
+        ================================================
+        
+        This demo implements Krygier's (1994) sound variables concept:
+        
+        1. PITCH: Maps to population size (larger cities = higher pitch)
+        2. VOLUME: Maps to economic prosperity (higher GDP = louder)
+        3. DURATION: Maps to geographic area (larger area = longer sound)
+        4. STEREO POSITION: Maps to longitude (east/west positioning)
+        
+        Technical Implementation:
+        - Uses Leaflet.js for mapping
+        - Uses Web Audio API for sound generation
+        - Demonstrates data-to-sound mapping functions
+        
+        To extend this:
+        - Add more sound variables (timbre, attack/decay)
+        - Connect to real datasets (APIs, CSV files)
+        - Add animation/temporal dimensions
+        - Implement 3D spatial audio
+        `);
+    </script>
+</body>
+</html>
