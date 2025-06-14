@@ -1,15 +1,9 @@
-        .data-display {
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sound-Enhanced Geographic Visualization</title>
+    <title>Visual-Only Multivariate Mapping</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
@@ -75,9 +69,8 @@
             background: #2980b9;
         }
         
-        button:disabled {
-            background: #7f8c8d;
-            cursor: not-allowed;
+        button.active {
+            background: #e74c3c;
         }
         
         .legend {
@@ -87,20 +80,20 @@
             margin-bottom: 20px;
         }
         
-        .sound-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background: #e74c3c;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: pulse 1s infinite;
+        .legend-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
         }
         
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        .legend-symbol {
+            width: 30px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .instructions {
@@ -110,6 +103,58 @@
             margin-bottom: 20px;
             font-size: 14px;
             line-height: 1.4;
+        }
+        
+        .data-display {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .visual-challenge {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .visual-challenge h4 {
+            margin-top: 0;
+            color: #e74c3c;
+        }
+        
+        /* Custom marker styles */
+        .city-marker {
+            border-radius: 50%;
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+            font-size: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        /* Wealth indicator patterns */
+        .wealth-high { background: linear-gradient(45deg, #27ae60, #2ecc71); }
+        .wealth-medium { background: linear-gradient(45deg, #f39c12, #e67e22); }
+        .wealth-low { background: linear-gradient(45deg, #8e44ad, #9b59b6); }
+        
+        /* Area indicator shapes */
+        .area-large { 
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        .area-medium {
+            clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+        }
+        .area-small {
+            border-radius: 50%;
         }
         
         .comparison-note {
@@ -124,88 +169,112 @@
             margin-top: 0;
             color: #3498db;
         }
-        
-        .sound-advantages {
-            background: rgba(46, 204, 113, 0.2);
-            border: 1px solid #2ecc71;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .sound-advantages h4 {
-            margin-top: 0;
-            color: #2ecc71;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Sound-Enhanced Map</h2>
-            <p>Implementing Krygier's Sound Variables (1994)</p>
+            <h2>Visual-Only Multivariate Map</h2>
+            <p>Traditional cartographic approach using only visual variables</p>
             
             <div class="comparison-note">
-                <h4>👁️ Compare with Visual-Only Version</h4>
-                <a href="./visual/" style="color: #3498db;">
-                    Open Visual-Only Version →
+                <h4>🎵 Compare with Sound Version</h4>
+                <a href="https://makingmaps.github.io/Sound-Mapping/" target="_blank" style="color: #3498db;">
+                    Open Sound-Enhanced Version →
                 </a>
                 <p style="font-size: 12px; margin: 5px 0 0 0;">Try both versions to compare how sound vs. visual variables handle multivariate data!</p>
             </div>
             
             <div class="instructions">
                 <strong>Instructions:</strong><br>
-                1. Click "Enable Audio" to start<br>
-                2. Click on any city marker<br>
-                3. Listen to how data maps to sound:<br>
-                • <strong>Pitch:</strong> Population (higher = higher pitch)<br>
-                • <strong>Volume:</strong> GDP per capita (listen during attack)<br>
-                • <strong>Duration:</strong> Area size (total length)<br>
-                • <strong>Timbre:</strong> Wealth (rich=sawtooth, poor=sine)<br>
-                • <strong>Stereo Position:</strong> Geographic location (use headphones!)
+                1. Click on any city marker<br>
+                2. Observe how 4 data variables are represented visually:<br>
+                • <strong>Size:</strong> Population (bigger = more people)<br>
+                • <strong>Color:</strong> GDP per capita (green=rich, orange=medium, purple=poor)<br>
+                • <strong>Shape:</strong> Geographic area (triangle=large, trapezoid=medium, circle=small)<br>
+                • <strong>Position:</strong> Geographic location
             </div>
             
             <div class="controls">
                 <div class="control-group">
-                    <button id="enableAudio">Enable Audio</button>
-                    <button id="stopSound" disabled>Stop Sound</button>
+                    <label>Display Mode:</label>
+                    <button id="showAll" class="active">Show All Variables</button>
+                    <button id="showPopulation">Population Only</button>
+                    <button id="showWealth">Wealth Only</button>
+                    <button id="showArea">Area Only</button>
                 </div>
                 
                 <div class="control-group">
-                    <label for="masterVolume">Master Volume:</label>
-                    <input type="range" id="masterVolume" min="0" max="1" step="0.1" value="0.3">
-                    <span id="volumeDisplay">30%</span>
-                </div>
-                
-                <div class="control-group">
-                    <label for="soundDuration">Sound Duration (seconds):</label>
-                    <input type="range" id="soundDuration" min="0.5" max="3" step="0.1" value="1.5">
-                    <span id="durationDisplay">1.5s</span>
+                    <label for="markerScale">Marker Scale:</label>
+                    <input type="range" id="markerScale" min="0.5" max="2" step="0.1" value="1">
+                    <span id="scaleDisplay">100%</span>
                 </div>
             </div>
             
             <div class="legend">
-                <h3>Sound Legend</h3>
-                <div><span class="sound-indicator"></span><strong>Pitch:</strong> Population size</div>
-                <div style="margin: 5px 0;"><strong>Volume:</strong> Economic prosperity (listen for attack level)</div>
-                <div><strong>Duration:</strong> Geographic area (total sound length)</div>
-                <div><strong>Timbre:</strong> Wealth level (sawtooth=rich, square=middle, sine=lower)</div>
-                <div><strong>Stereo:</strong> East/West position (use headphones!)</div>
+                <h3>Visual Legend</h3>
+                
+                <h4>Size = Population</h4>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="city-marker" style="width: 25px; height: 25px; background: #gray;"></div>
+                    </div>
+                    <span>Large circle = High population</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="city-marker" style="width: 15px; height: 15px; background: #gray;"></div>
+                    </div>
+                    <span>Small circle = Low population</span>
+                </div>
+                
+                <h4>Color = GDP per Capita</h4>
+                <div class="legend-item">
+                    <div class="legend-symbol wealth-high"></div>
+                    <span>Green = High GDP ($50k+)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol wealth-medium"></div>
+                    <span>Orange = Medium GDP ($20-50k)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol wealth-low"></div>
+                    <span>Purple = Lower GDP (<$20k)</span>
+                </div>
+                
+                <h4>Shape = Geographic Area</h4>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="city-marker area-large" style="width: 20px; height: 20px; background: #gray;"></div>
+                    </div>
+                    <span>Triangle = Large area</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="city-marker area-medium" style="width: 20px; height: 20px; background: #gray;"></div>
+                    </div>
+                    <span>Trapezoid = Medium area</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="city-marker area-small" style="width: 20px; height: 20px; background: #gray;"></div>
+                    </div>
+                    <span>Circle = Small area</span>
+                </div>
             </div>
             
-            <div class="sound-advantages">
-                <h4>🎵 Sound Variable Advantages</h4>
+            <div class="visual-challenge">
+                <h4>⚠️ Visual Challenges</h4>
                 <p style="font-size: 12px;">
-                    • All variables heard simultaneously without interference<br>
-                    • No visual crowding or symbol overlap<br>
-                    • Temporal patterns emerge naturally<br>
-                    • Accessible to visually impaired users<br>
-                    • Memorable embodied experience
+                    • Can you quickly distinguish all 4 variables simultaneously?<br>
+                    • Which relationships are hard to see?<br>
+                    • How does visual "crowding" affect readability?<br>
+                    • What happens with overlapping symbols?
                 </p>
             </div>
             
             <div class="data-display" id="dataDisplay">
-                Click a city to see data mapping...
+                Click a city to see data encoding...
             </div>
         </div>
         
@@ -216,7 +285,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Sample city data with multiple variables
+        // Same city data as sound version for direct comparison
         const cityData = [
             {
                 name: "New York",
@@ -355,13 +424,6 @@
             }
         ];
 
-        // Audio context and variables
-        let audioContext;
-        let isAudioEnabled = false;
-        let currentOscillator = null;
-        let currentGainNode = null;
-        let currentPannerNode = null;
-
         // Map initialization
         const map = L.map('map').setView([30, 0], 2);
         
@@ -369,196 +431,193 @@
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Sound utility functions implementing Krygier's sound variables
-        function mapToFrequency(population) {
-            // Map population to musical frequency range (A3 to A6)
+        let markers = [];
+        let currentDisplayMode = 'all';
+
+        // Mapping functions to visual variables
+        function mapToSize(population) {
             const minPop = Math.min(...cityData.map(c => c.population));
             const maxPop = Math.max(...cityData.map(c => c.population));
             const normalized = (population - minPop) / (maxPop - minPop);
-            // A3 (220Hz) to A6 (1760Hz) - 3 octaves
-            return 220 + (normalized * 1540);
+            return 15 + (normalized * 35); // 15px to 50px diameter
         }
 
-        function mapToVolume(gdpPerCapita) {
-            // Map GDP per capita to volume (0.1 to 0.8)
-            const minGDP = Math.min(...cityData.map(c => c.gdpPerCapita));
-            const maxGDP = Math.max(...cityData.map(c => c.gdpPerCapita));
-            const normalized = (gdpPerCapita - minGDP) / (maxGDP - minGDP);
-            return 0.1 + (normalized * 0.7);
+        function mapToColor(gdpPerCapita) {
+            if (gdpPerCapita >= 50000) return 'wealth-high';
+            if (gdpPerCapita >= 20000) return 'wealth-medium';
+            return 'wealth-low';
         }
 
-        function mapToDuration(area) {
-            // Map area to sound duration (0.5 to 3 seconds)
+        function mapToShape(area) {
             const minArea = Math.min(...cityData.map(c => c.area));
             const maxArea = Math.max(...cityData.map(c => c.area));
             const normalized = (area - minArea) / (maxArea - minArea);
-            const baseDuration = parseFloat(document.getElementById('soundDuration').value);
-            return baseDuration * (0.5 + normalized * 0.5);
+            
+            if (normalized > 0.6) return 'area-large';
+            if (normalized > 0.3) return 'area-medium';
+            return 'area-small';
         }
 
-        function mapToPanning(lng) {
-            // Map longitude to stereo position (-1 to 1)
-            return Math.max(-1, Math.min(1, lng / 180));
-        }
-
-        // Audio functions
-        function initAudio() {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                isAudioEnabled = true;
-                document.getElementById('enableAudio').disabled = true;
-                document.getElementById('stopSound').disabled = false;
-                console.log('Audio enabled successfully');
-            } catch (error) {
-                console.error('Error initializing audio:', error);
-                alert('Audio not supported in this browser');
+        function createCustomMarker(city) {
+            const size = mapToSize(city.population);
+            const colorClass = mapToColor(city.gdpPerCapita);
+            const shapeClass = mapToShape(city.area);
+            const scale = parseFloat(document.getElementById('markerScale').value);
+            
+            const scaledSize = size * scale;
+            
+            let displaySize = scaledSize;
+            let displayColor = colorClass;
+            let displayShape = shapeClass;
+            
+            // Modify display based on current mode
+            switch(currentDisplayMode) {
+                case 'population':
+                    displayColor = 'wealth-medium'; // neutral color
+                    displayShape = 'area-small'; // neutral shape
+                    break;
+                case 'wealth':
+                    displaySize = 30 * scale; // uniform size
+                    displayShape = 'area-small'; // neutral shape
+                    break;
+                case 'area':
+                    displaySize = 30 * scale; // uniform size
+                    displayColor = 'wealth-medium'; // neutral color
+                    break;
             }
+
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="city-marker ${displayColor} ${displayShape}" 
+                            style="width: ${displaySize}px; height: ${displaySize}px; font-size: ${Math.max(8, displaySize/4)}px;">
+                            ${city.name.substring(0,3).toUpperCase()}
+                       </div>`,
+                iconSize: [displaySize, displaySize],
+                iconAnchor: [displaySize/2, displaySize/2]
+            });
+
+            return L.marker([city.lat, city.lng], { icon: icon });
         }
 
-        function playSound(city) {
-            if (!isAudioEnabled || !audioContext) return;
-
-            // Stop any currently playing sound
-            stopCurrentSound();
-
-            try {
-                // Create oscillator (tone generator)
-                currentOscillator = audioContext.createOscillator();
-                currentGainNode = audioContext.createGain();
-                currentPannerNode = audioContext.createStereoPanner();
-
-                // Set up the audio graph: oscillator -> gain -> panner -> destination
-                currentOscillator.connect(currentGainNode);
-                currentGainNode.connect(currentPannerNode);
-                currentPannerNode.connect(audioContext.destination);
-
-                // Apply sound variables
-                const frequency = mapToFrequency(city.population);
-                const volume = mapToVolume(city.gdpPerCapita) * parseFloat(document.getElementById('masterVolume').value);
-                const duration = mapToDuration(city.area);
-                const panning = mapToPanning(city.lng);
-
-                // Configure the sound with more distinctive characteristics
-                currentOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-                
-                // Use different waveform based on GDP (timbre variable)
-                if (city.gdpPerCapita > 50000) {
-                    currentOscillator.type = 'sawtooth'; // Rich countries = brighter sound
-                } else if (city.gdpPerCapita > 30000) {
-                    currentOscillator.type = 'square'; // Medium wealth = harsh sound
-                } else {
-                    currentOscillator.type = 'sine'; // Lower wealth = pure tone
-                }
-                
-                // Much more pronounced volume differences and longer attack to hear volume changes
-                currentGainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                currentGainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.3); // Slower attack
-                currentGainNode.gain.setValueAtTime(volume, audioContext.currentTime + 0.4); // Hold at peak
-                currentGainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); // Then decay
-                
-                // More extreme panning to make stereo position obvious
-                const extremePanning = panning * 1.5; // Exaggerate the effect
-                currentPannerNode.pan.setValueAtTime(Math.max(-1, Math.min(1, extremePanning)), audioContext.currentTime);
-
-                // Start and stop the sound
-                currentOscillator.start(audioContext.currentTime);
-                currentOscillator.stop(audioContext.currentTime + duration);
-
-                // Update data display
-                updateDataDisplay(city, frequency, volume, duration, panning);
-
-                // Clean up when sound ends
-                currentOscillator.onended = () => {
-                    currentOscillator = null;
-                    currentGainNode = null;
-                    currentPannerNode = null;
-                };
-
-            } catch (error) {
-                console.error('Error playing sound:', error);
-            }
-        }
-
-        function stopCurrentSound() {
-            if (currentOscillator) {
-                try {
-                    currentOscillator.stop();
-                    currentOscillator = null;
-                    currentGainNode = null;
-                    currentPannerNode = null;
-                } catch (error) {
-                    console.error('Error stopping sound:', error);
-                }
-            }
-        }
-
-        function updateDataDisplay(city, frequency, volume, duration, panning) {
+        function updateDataDisplay(city) {
             const display = document.getElementById('dataDisplay');
+            const size = mapToSize(city.population);
+            const colorClass = mapToColor(city.gdpPerCapita);
+            const shapeClass = mapToShape(city.area);
+            
+            const colorLabel = {
+                'wealth-high': 'Green (High GDP)',
+                'wealth-medium': 'Orange (Medium GDP)', 
+                'wealth-low': 'Purple (Low GDP)'
+            }[colorClass];
+            
+            const shapeLabel = {
+                'area-large': 'Triangle (Large area)',
+                'area-medium': 'Trapezoid (Medium area)',
+                'area-small': 'Circle (Small area)'
+            }[shapeClass];
+            
             display.innerHTML = `
                 <strong>${city.name}</strong><br>
                 Population: ${city.population.toLocaleString()}<br>
                 GDP/capita: $${city.gdpPerCapita.toLocaleString()}<br>
                 Area: ${city.area} km²<br><br>
-                <strong>Sound Mapping:</strong><br>
-                Frequency: ${frequency.toFixed(1)} Hz<br>
-                Volume: ${(volume * 100).toFixed(1)}%<br>
-                Duration: ${duration.toFixed(1)}s<br>
-                Panning: ${panning.toFixed(2)} (${panning < 0 ? 'Left' : panning > 0 ? 'Right' : 'Center'})
+                <strong>Visual Encoding:</strong><br>
+                Size: ${size.toFixed(0)}px (Population)<br>
+                Color: ${colorLabel}<br>
+                Shape: ${shapeLabel}<br>
+                Position: Geographic location
             `;
         }
 
-        // Create map markers
-        cityData.forEach(city => {
-            const marker = L.marker([city.lat, city.lng])
-                .addTo(map)
-                .bindPopup(`
+        function createMarkers() {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Create new markers
+            cityData.forEach(city => {
+                const marker = createCustomMarker(city);
+                
+                marker.bindPopup(`
                     <strong>${city.name}</strong><br>
                     ${city.description}<br>
                     Population: ${city.population.toLocaleString()}<br>
                     GDP/capita: $${city.gdpPerCapita.toLocaleString()}<br>
                     Area: ${city.area} km²<br>
-                    <br><em>Click marker to hear data sonification</em>
+                    <br><em>Visual encoding shows 4 variables simultaneously</em>
                 `);
 
-            marker.on('click', () => {
-                playSound(city);
+                marker.on('click', () => {
+                    updateDataDisplay(city);
+                });
+
+                marker.addTo(map);
+                markers.push(marker);
             });
-        });
+        }
 
         // Event listeners
-        document.getElementById('enableAudio').addEventListener('click', initAudio);
-        document.getElementById('stopSound').addEventListener('click', stopCurrentSound);
-
-        document.getElementById('masterVolume').addEventListener('input', (e) => {
-            document.getElementById('volumeDisplay').textContent = `${Math.round(e.target.value * 100)}%`;
+        document.getElementById('showAll').addEventListener('click', (e) => {
+            currentDisplayMode = 'all';
+            updateButtonStates(e.target);
+            createMarkers();
         });
 
-        document.getElementById('soundDuration').addEventListener('input', (e) => {
-            document.getElementById('durationDisplay').textContent = `${e.target.value}s`;
+        document.getElementById('showPopulation').addEventListener('click', (e) => {
+            currentDisplayMode = 'population';
+            updateButtonStates(e.target);
+            createMarkers();
         });
 
-        // Instructions for students
+        document.getElementById('showWealth').addEventListener('click', (e) => {
+            currentDisplayMode = 'wealth';
+            updateButtonStates(e.target);
+            createMarkers();
+        });
+
+        document.getElementById('showArea').addEventListener('click', (e) => {
+            currentDisplayMode = 'area';
+            updateButtonStates(e.target);
+            createMarkers();
+        });
+
+        document.getElementById('markerScale').addEventListener('input', (e) => {
+            document.getElementById('scaleDisplay').textContent = `${Math.round(e.target.value * 100)}%`;
+            createMarkers();
+        });
+
+        function updateButtonStates(activeButton) {
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            activeButton.classList.add('active');
+        }
+
+        // Initialize markers
+        createMarkers();
+
+        // Instructions for comparison
         console.log(`
-        Sound-Enhanced Geographic Visualization Tutorial
-        ================================================
+        Visual-Only Multivariate Mapping
+        ================================
         
-        This demo implements Krygier's (1994) sound variables concept:
+        This version uses traditional cartographic visual variables:
         
-        1. PITCH: Maps to population size (larger cities = higher pitch)
-        2. VOLUME: Maps to economic prosperity (higher GDP = louder)
-        3. DURATION: Maps to geographic area (larger area = longer sound)
-        4. STEREO POSITION: Maps to longitude (east/west positioning)
+        1. SIZE: Maps to population (Bertin's visual variable)
+        2. COLOR: Maps to economic prosperity (hue/value)
+        3. SHAPE: Maps to geographic area (form)
+        4. POSITION: Maps to geographic location (x,y coordinates)
         
-        Technical Implementation:
-        - Uses Leaflet.js for mapping
-        - Uses Web Audio API for sound generation
-        - Demonstrates data-to-sound mapping functions
+        Compare this with the sound version to explore:
+        - Which approach handles visual/cognitive overload better?
+        - How many variables can you distinguish simultaneously?
+        - Which method reveals patterns more clearly?
+        - What are the accessibility implications?
         
-        To extend this:
-        - Add more sound variables (timbre, attack/decay)
-        - Connect to real datasets (APIs, CSV files)
-        - Add animation/temporal dimensions
-        - Implement 3D spatial audio
+        Key Questions for Comparison:
+        - Can you "read" all 4 variables as quickly as hearing them?
+        - What happens when symbols overlap?
+        - Which approach scales better with more data points?
+        - How do personal preferences (visual vs. auditory learners) affect comprehension?
         `);
     </script>
 </body>
