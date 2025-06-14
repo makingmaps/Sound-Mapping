@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+        .data-display {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -106,12 +112,30 @@
             line-height: 1.4;
         }
         
-        .data-display {
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
+        .comparison-note {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid #3498db;
+            padding: 15px;
             border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .comparison-note h4 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        .sound-advantages {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .sound-advantages h4 {
+            margin-top: 0;
+            color: #2ecc71;
         }
     </style>
 </head>
@@ -120,6 +144,14 @@
         <div class="sidebar">
             <h2>Sound-Enhanced Map</h2>
             <p>Implementing Krygier's Sound Variables (1994)</p>
+            
+            <div class="comparison-note">
+                <h4>👁️ Compare with Visual-Only Version</h4>
+                <a href="./visual/" style="color: #3498db;">
+                    Open Visual-Only Version →
+                </a>
+                <p style="font-size: 12px; margin: 5px 0 0 0;">Try both versions to compare how sound vs. visual variables handle multivariate data!</p>
+            </div>
             
             <div class="instructions">
                 <strong>Instructions:</strong><br>
@@ -159,6 +191,17 @@
                 <div><strong>Duration:</strong> Geographic area (total sound length)</div>
                 <div><strong>Timbre:</strong> Wealth level (sawtooth=rich, square=middle, sine=lower)</div>
                 <div><strong>Stereo:</strong> East/West position (use headphones!)</div>
+            </div>
+            
+            <div class="sound-advantages">
+                <h4>🎵 Sound Variable Advantages</h4>
+                <p style="font-size: 12px;">
+                    • All variables heard simultaneously without interference<br>
+                    • No visual crowding or symbol overlap<br>
+                    • Temporal patterns emerge naturally<br>
+                    • Accessible to visually impaired users<br>
+                    • Memorable embodied experience
+                </p>
             </div>
             
             <div class="data-display" id="dataDisplay">
